@@ -153,3 +153,70 @@ main {
   align-items: baseline;
   flex-wrap: wrap;
 }
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.tabs button[aria-pressed='true'] {
+  font-weight: bold;
+}
+
+.threshold {
+  margin-bottom: 1rem;
+}
+
+.threshold-input {
+  width: 4rem;
+}
+
+.signal-list,
+.signal-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.signal-stock {
+  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  padding: 0.75rem 0;
+}
+
+.signal-head {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.signal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  align-items: baseline;
+  margin: 0.25rem 0 0 1rem;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.signal-row small {
+  color: GrayText;
+}
+
+.signal-indicator {
+  min-width: 9rem;
+}
+
+.signal-missing {
+  color: GrayText;
+}
+
+.flag {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #b45309;
+  border: 1px solid currentColor;
+  border-radius: 0.25rem;
+  padding: 0 0.35rem;
+}
