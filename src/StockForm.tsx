@@ -12,12 +12,14 @@ interface Props {
   initial: StockDraft
   // The other tracked stocks, for the duplicate-ticker check.
   others: Stock[]
+  // Indicators that already have values: their frequency can't change, since the values' periods depend on it.
+  indicatorsWithValues?: Set<string>
   submitLabel: string
   onSubmit: (draft: StockDraft) => void
   onCancel: () => void
 }
 
-export function StockForm({ initial, others, submitLabel, onSubmit, onCancel }: Props) {
+export function StockForm({ initial, others, indicatorsWithValues, submitLabel, onSubmit, onCancel }: Props) {
   const [draft, setDraft] = useState<StockDraft>(initial)
   const [problems, setProblems] = useState<string[]>([])
 
@@ -71,6 +73,12 @@ export function StockForm({ initial, others, submitLabel, onSubmit, onCancel }: 
               Published
               <select
                 value={indicator.frequency}
+                disabled={indicator.id !== undefined && indicatorsWithValues?.has(indicator.id)}
+                title={
+                  indicator.id !== undefined && indicatorsWithValues?.has(indicator.id)
+                    ? "Values are entered for this indicator's periods, so this can't change."
+                    : undefined
+                }
                 onChange={(e) => setIndicator(i, { frequency: e.target.value as Frequency })}
               >
                 <option value="monthly">Monthly</option>

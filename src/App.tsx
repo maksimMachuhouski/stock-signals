@@ -1,21 +1,22 @@
 import { useEffect, useState } from 'react'
+import { IndicatorValues, StockPrices } from './EntryLists.tsx'
+import { toPrice, todayISO, toValue } from './entries.ts'
 import { StockForm } from './StockForm.tsx'
-import { loadData, saveData, type AppData } from './storage.ts'
-import { emptyIndicator, toDraft, toStock, type Stock } from './stocks.ts'
+import { loadData, removeStock, replaceStock, saveData, type AppData } from './storage.ts'
+import { emptyIndicator, toDraft, toStock } from './stocks.ts'
 
 const browserStorage = typeof localStorage === 'undefined' ? undefined : localStorage
 
 // What the stock section shows: the list, the add form, or one stock's edit form.
 type Mode = { kind: 'list' } | { kind: 'add' } | { kind: 'edit'; stockId: string }
 
-export function App({ initialData }: { initialData?: AppData }) {
+export function App({ initialData, today = todayISO() }: { initialData?: AppData; today?: string }) {
   const [data, setData] = useState<AppData>(() => initialData ?? loadData(browserStorage))
   const [mode, setMode] = useState<Mode>({ kind: 'list' })
   const [confirmingRemoval, setConfirmingRemoval] = useState<string | null>(null)
 
   useEffect(() => saveData(browserStorage, data), [data])
 
-  const setStocks = (update: (stocks: Stock[]) => Stock[]) => setData((d) => ({ ...d, stocks: update(d.stocks) }))
   const busy = mode.kind !== 'list' || confirmingRemoval !== null
 
   return (
@@ -30,7 +31,7 @@ export function App({ initialData }: { initialData?: AppData }) {
             others={data.stocks}
             submitLabel="Add stock"
             onSubmit={(draft) => {
-              setStocks((stocks) => [...stocks, toStock(draft)])
+              setData((d) => ({ ...d, stocks: [...d.stocks, toStock(draft)] }))
               setMode({ kind: 'list' })
             }}
             onCancel={() => setMode({ kind: 'list' })}
@@ -52,9 +53,10 @@ export function App({ initialData }: { initialData?: AppData }) {
                 <StockForm
                   initial={toDraft(stock)}
                   others={data.stocks.filter((s) => s.id !== stock.id)}
+                  indicatorsWithValues={new Set(data.values.map((v) => v.indicatorId))}
                   submitLabel="Save"
                   onSubmit={(draft) => {
-                    setStocks((stocks) => stocks.map((s) => (s.id === stock.id ? toStock(draft, stock.id) : s)))
+                    setData((d) => replaceStock(d, toStock(draft, stock.id)))
                     setMode({ kind: 'list' })
                   }}
                   onCancel={() => setMode({ kind: 'list' })}
@@ -71,7 +73,7 @@ export function App({ initialData }: { initialData?: AppData }) {
                         <button
                           type="button"
                           onClick={() => {
-                            setStocks((stocks) => stocks.filter((s) => s.id !== stock.id))
+                            setData((d) => removeStock(d, stock.id))
                             setConfirmingRemoval(null)
                           }}
                         >
@@ -103,13 +105,35 @@ export function App({ initialData }: { initialData?: AppData }) {
                     )}
                   </span>
                 </div>
-                <ul className="indicators">
-                  {stock.indicators.map((indicator) => (
-                    <li key={indicator.id}>
-                      {`${indicator.name} (${indicator.unit}, ${indicator.frequency})`}
-                    </li>
-                  ))}
-                </ul>
+                {stock.indicators.map((indicator) => (
+                  <IndicatorValues
+                    key={indicator.id}
+                    indicator={indicator}
+                    values={data.values.filter((v) => v.indicatorId === indicator.id)}
+                    today={today}
+                    onAdd={(draft) => setData((d) => ({ ...d, values: [...d.values, toValue(draft, indicator.id)] }))}
+                    onUpdate={(id, draft) =>
+                      setData((d) => ({
+                        ...d,
+                        values: d.values.map((v) => (v.id === id ? toValue(draft, indicator.id, id) : v)),
+                      }))
+                    }
+                    onDelete={(id) => setData((d) => ({ ...d, values: d.values.filter((v) => v.id !== id) }))}
+                  />
+                ))}
+                <StockPrices
+                  stock={stock}
+                  prices={data.prices.filter((p) => p.stockId === stock.id)}
+                  today={today}
+                  onAdd={(draft) => setData((d) => ({ ...d, prices: [...d.prices, toPrice(draft, stock.id)] }))}
+                  onUpdate={(id, draft) =>
+                    setData((d) => ({
+                      ...d,
+                      prices: d.prices.map((p) => (p.id === id ? toPrice(draft, stock.id, id) : p)),
+                    }))
+                  }
+                  onDelete={(id) => setData((d) => ({ ...d, prices: d.prices.filter((p) => p.id !== id) }))}
+                />
               </li>
             ),
           )}
