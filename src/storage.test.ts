@@ -35,6 +35,7 @@ const data: AppData = {
     { id: 'p1', stockId: 's1', date: '2026-04-01', price: 250 },
     { id: 'p2', stockId: 's2', date: '2026-04-01', price: 200 },
   ],
+  threshold: 10,
 }
 
 test('saved data loads back unchanged', () => {
@@ -52,7 +53,7 @@ test('missing, unreadable, or unknown data starts empty', () => {
 
 test('data saved before values and prices existed loads with none', () => {
   const old = JSON.stringify({ version: 1, stocks: [tesla] })
-  expect(loadData(memoryStorage({ [STORAGE_KEY]: old }))).toEqual({ version: 1, stocks: [tesla], values: [], prices: [] })
+  expect(loadData(memoryStorage({ [STORAGE_KEY]: old }))).toEqual({ version: 1, stocks: [tesla], values: [], prices: [], threshold: 10 })
 })
 
 test('removing a stock removes its values and prices, and no others', () => {

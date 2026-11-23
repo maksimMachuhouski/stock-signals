@@ -28,6 +28,7 @@ test('tracked stocks are listed with their indicators, values, and prices', () =
         ],
         values: [{ id: 'v1', indicatorId: 'i1', period: '2026-Q3', value: 497099, note: 'record' }],
         prices: [{ id: 'p1', stockId: 's1', date: '2026-11-20', price: 250.5 }],
+        threshold: 10,
       }}
     />,
   )
