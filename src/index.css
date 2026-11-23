@@ -148,3 +148,8 @@ main {
 .year-input {
   width: 4.5rem;
 }
+
+.confirm {
+  align-items: baseline;
+  flex-wrap: wrap;
+}
