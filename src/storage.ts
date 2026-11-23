@@ -7,16 +7,19 @@ export interface AppData {
   stocks: Stock[]
   values: IndicatorValue[]
   prices: Price[]
+  // The gap, in percentage points, at which an indicator is flagged (R-6).
+  threshold: number
 }
 
 export const STORAGE_KEY = 'stock-signals'
+export const DEFAULT_THRESHOLD = 10
 
 export function emptyData(): AppData {
-  return { version: 1, stocks: [], values: [], prices: [] }
+  return { version: 1, stocks: [], values: [], prices: [], threshold: DEFAULT_THRESHOLD }
 }
 
 // A storage that is missing, unreadable, or holds something else starts the app empty.
-// Data saved before values and prices existed loads with none.
+// Data saved before values, prices, or the threshold existed loads with none and the default threshold.
 export function loadData(storage: Pick<Storage, 'getItem'> | undefined): AppData {
   try {
     const raw = storage?.getItem(STORAGE_KEY)
@@ -28,6 +31,7 @@ export function loadData(storage: Pick<Storage, 'getItem'> | undefined): AppData
       stocks: parsed.stocks,
       values: Array.isArray(parsed.values) ? parsed.values : [],
       prices: Array.isArray(parsed.prices) ? parsed.prices : [],
+      threshold: typeof parsed.threshold === 'number' ? parsed.threshold : DEFAULT_THRESHOLD,
     }
   } catch {
     return emptyData()

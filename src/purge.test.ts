@@ -28,6 +28,7 @@ const data: AppData = {
     { id: 'p1', stockId: 's1', date: '2026-04-01', price: 250 },
     { id: 'p2', stockId: 's2', date: '2026-04-01', price: 200 },
   ],
+  threshold: 10,
 }
 
 test("a stock's count covers all its indicators' values and its prices", () => {
