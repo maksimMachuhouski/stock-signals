@@ -61,3 +61,29 @@ export function removeStock(data: AppData, stockId: string): AppData {
     prices: data.prices.filter((p) => p.stockId !== stockId),
   }
 }
+
+// How much recorded data goes with a stock or with some of its indicators (R-5).
+export interface DataCount {
+  values: number
+  prices: number
+}
+
+export function countStockData(data: AppData, stockId: string): DataCount {
+  const stock = data.stocks.find((s) => s.id === stockId)
+  const indicatorIds = new Set(stock?.indicators.map((i) => i.id))
+  return {
+    values: data.values.filter((v) => indicatorIds.has(v.indicatorId)).length,
+    prices: data.prices.filter((p) => p.stockId === stockId).length,
+  }
+}
+
+// "3 indicator values and 1 price", or "" when there is nothing.
+export function describeCount({ values, prices }: DataCount): string {
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+  return [
+    values > 0 && plural(values, 'indicator value', 'indicator values'),
+    prices > 0 && plural(prices, 'price', 'prices'),
+  ]
+    .filter(Boolean)
+    .join(' and ')
+}

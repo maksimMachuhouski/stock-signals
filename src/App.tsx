@@ -2,7 +2,15 @@ import { useEffect, useState } from 'react'
 import { IndicatorValues, StockPrices } from './EntryLists.tsx'
 import { toPrice, todayISO, toValue } from './entries.ts'
 import { StockForm } from './StockForm.tsx'
-import { loadData, removeStock, replaceStock, saveData, type AppData } from './storage.ts'
+import {
+  countStockData,
+  describeCount,
+  loadData,
+  removeStock,
+  replaceStock,
+  saveData,
+  type AppData,
+} from './storage.ts'
 import { emptyIndicator, toDraft, toStock } from './stocks.ts'
 
 const browserStorage = typeof localStorage === 'undefined' ? undefined : localStorage
@@ -53,7 +61,7 @@ export function App({ initialData, today = todayISO() }: { initialData?: AppData
                 <StockForm
                   initial={toDraft(stock)}
                   others={data.stocks.filter((s) => s.id !== stock.id)}
-                  indicatorsWithValues={new Set(data.values.map((v) => v.indicatorId))}
+                  valueCounts={valueCounts(data)}
                   submitLabel="Save"
                   onSubmit={(draft) => {
                     setData((d) => replaceStock(d, toStock(draft, stock.id)))
@@ -69,7 +77,7 @@ export function App({ initialData, today = todayISO() }: { initialData?: AppData
                   <span className="stock-actions">
                     {confirmingRemoval === stock.id ? (
                       <>
-                        Remove {stock.ticker}?{' '}
+                        {removalQuestion(stock.ticker, describeCount(countStockData(data, stock.id)))}{' '}
                         <button
                           type="button"
                           onClick={() => {
@@ -141,4 +149,15 @@ export function App({ initialData, today = todayISO() }: { initialData?: AppData
       )}
     </main>
   )
+}
+
+// Values per indicator, so the edit form can lock frequencies and say what removing an indicator deletes.
+function valueCounts(data: AppData): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const v of data.values) counts.set(v.indicatorId, (counts.get(v.indicatorId) ?? 0) + 1)
+  return counts
+}
+
+function removalQuestion(ticker: string, deleted: string): string {
+  return deleted ? `Remove ${ticker} and delete its ${deleted}?` : `Remove ${ticker}? It has no values or prices.`
 }

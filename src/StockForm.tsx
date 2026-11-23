@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   emptyIndicator,
   MAX_INDICATORS,
@@ -12,16 +12,22 @@ interface Props {
   initial: StockDraft
   // The other tracked stocks, for the duplicate-ticker check.
   others: Stock[]
-  // Indicators that already have values: their frequency can't change, since the values' periods depend on it.
-  indicatorsWithValues?: Set<string>
+  // Values recorded per indicator id. An indicator with values keeps its frequency, since the values' periods
+  // depend on it, and saving without it asks first, saying how many values go with it (R-5).
+  valueCounts?: Map<string, number>
   submitLabel: string
   onSubmit: (draft: StockDraft) => void
   onCancel: () => void
 }
 
-export function StockForm({ initial, others, indicatorsWithValues, submitLabel, onSubmit, onCancel }: Props) {
+export function StockForm({ initial, others, valueCounts, submitLabel, onSubmit, onCancel }: Props) {
   const [draft, setDraft] = useState<StockDraft>(initial)
   const [problems, setProblems] = useState<string[]>([])
+  // Set when a valid save would delete values: what to tell the user before going ahead.
+  const [confirming, setConfirming] = useState<string | null>(null)
+  // Any change after the question was asked makes it stale; the next save asks again.
+  useEffect(() => setConfirming(null), [draft])
+  const hasValues = (id: string | undefined) => id !== undefined && (valueCounts?.get(id) ?? 0) > 0
 
   const setIndicator = (index: number, change: Partial<StockDraft['indicators'][number]>) =>
     setDraft((d) => ({
@@ -33,7 +39,11 @@ export function StockForm({ initial, others, indicatorsWithValues, submitLabel, 
     event.preventDefault()
     const found = validateStock(draft, others)
     setProblems(found)
-    if (found.length === 0) onSubmit(draft)
+    if (found.length > 0) return
+    const kept = new Set(draft.indicators.map((i) => i.id))
+    const dropped = initial.indicators.filter((i) => !kept.has(i.id) && hasValues(i.id))
+    if (dropped.length === 0) onSubmit(draft)
+    else setConfirming(dropped.map((i) => removalText(i.name, valueCounts?.get(i.id!) ?? 0)).join(' '))
   }
 
   return (
@@ -73,9 +83,9 @@ export function StockForm({ initial, others, indicatorsWithValues, submitLabel, 
               Published
               <select
                 value={indicator.frequency}
-                disabled={indicator.id !== undefined && indicatorsWithValues?.has(indicator.id)}
+                disabled={hasValues(indicator.id)}
                 title={
-                  indicator.id !== undefined && indicatorsWithValues?.has(indicator.id)
+                  hasValues(indicator.id)
                     ? "Values are entered for this indicator's periods, so this can't change."
                     : undefined
                 }
@@ -115,12 +125,28 @@ export function StockForm({ initial, others, indicatorsWithValues, submitLabel, 
         </ul>
       )}
 
-      <div className="actions">
-        <button type="submit">{submitLabel}</button>
-        <button type="button" onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
+      {confirming ? (
+        <div className="actions confirm" role="alert">
+          {confirming}
+          <button type="button" onClick={() => onSubmit(draft)}>
+            Save and delete
+          </button>
+          <button type="button" onClick={() => setConfirming(null)}>
+            Back
+          </button>
+        </div>
+      ) : (
+        <div className="actions">
+          <button type="submit">{submitLabel}</button>
+          <button type="button" onClick={onCancel}>
+            Cancel
+          </button>
+        </div>
+      )}
     </form>
   )
+}
+
+export function removalText(indicatorName: string, values: number): string {
+  return `Saving removes ${indicatorName} and deletes its ${values} ${values === 1 ? 'value' : 'values'}.`
 }
