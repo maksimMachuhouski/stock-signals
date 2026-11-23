@@ -9,9 +9,10 @@ test('the app renders its title and an empty list', () => {
   expect(html).toContain('No stocks are tracked yet.')
 })
 
-test('tracked stocks are listed with their indicators', () => {
+test('tracked stocks are listed with their indicators, values, and prices', () => {
   const html = renderToString(
     <App
+      today="2026-11-23"
       initialData={{
         version: 1,
         stocks: [
@@ -25,11 +26,17 @@ test('tracked stocks are listed with their indicators', () => {
             ],
           },
         ],
+        values: [{ id: 'v1', indicatorId: 'i1', period: '2026-Q3', value: 497099, note: 'record' }],
+        prices: [{ id: 'p1', stockId: 's1', date: '2026-11-20', price: 250.5 }],
       }}
     />,
   )
   expect(html).toContain('TSLA')
   expect(html).toContain('Deliveries (vehicles, quarterly)')
   expect(html).toContain('Energy storage (GWh, monthly)')
+  expect(html).toContain('Q3 2026')
+  expect(html).toContain('record')
+  expect(html).toContain('2026-11-20')
+  expect(html).toContain('No values yet.')
   expect(html).not.toContain('No stocks are tracked yet.')
 })
