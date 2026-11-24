@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Backup } from './Backup.tsx'
 import { IndicatorValues, StockPrices } from './EntryLists.tsx'
 import { SignalList } from './SignalList.tsx'
 import { toPrice, todayISO, toValue } from './entries.ts'
@@ -173,6 +174,17 @@ export function App({
               )}
             </ul>
           )}
+
+          <Backup
+            data={data}
+            today={today}
+            disabled={busy}
+            onReplace={(imported) => {
+              setData(imported)
+              setMode({ kind: 'list' })
+              setConfirmingRemoval(null)
+            }}
+          />
         </>
       )}
     </main>
