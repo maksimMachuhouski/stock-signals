@@ -12,6 +12,7 @@ test('the app renders its title and an empty list', () => {
 test('tracked stocks are listed with their indicators, values, and prices', () => {
   const html = renderToString(
     <App
+      initialTab="data"
       today="2026-11-23"
       initialData={{
         version: 1,
